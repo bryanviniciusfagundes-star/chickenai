@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ChickenAI · Señales</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+:root{
+  --bg:#08070a;--bg2:#0f0d12;--bg3:#141118;--bd:#26192e;
+  --or:#ff5e00;--am:#ffaa00;--gd:#ffd740;
+  --gr:#00ff6a;--rd:#ff2233;
+  --wh:#fff4e0;--mu:#4a3d58;--tx:#bbaac8;
+  --go:rgba(255,94,0,.5);--gg:rgba(0,255,106,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Rajdhani',sans-serif;color:var(--tx)}
+
+/* NOISE */
+body::before{content:'';position:fixed;inset:0;z-index:990;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.03) 0px,rgba(0,0,0,.03) 1px,transparent 1px,transparent 3px);
+  animation:scanLines 8s linear infinite}
+@keyframes scanLines{from{background-position:0 0}to{background-position:0 100px}}
+
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* ── TOPBAR ── */
+.tb{flex-shrink:0;height:50px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 15px;background:linear-gradient(180deg,#1c1020,#0f0d12);
+  border-bottom:1px solid #2a1832;position:relative;z-index:20}
+.tb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent 0%,var(--or) 30%,var(--am) 50%,var(--or) 70%,transparent 100%)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:3px;color:var(--wh);display:flex;align-items:center;gap:6px}
+.logo-fire{font-size:1.1rem;animation:fireShake .4s ease-in-out infinite alternate}
+@keyframes fireShake{from{transform:rotate(-5deg)scale(.95)}to{transform:rotate(5deg)scale(1.05)}}
+.logo em{color:var(--or);font-style:normal;text-shadow:0 0 18px var(--go),0 0 35px rgba(255,94,0,.25)}
+.tb-r{display:flex;align-items:center;gap:7px}
+.dpill{font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:2px;padding:3px 9px;border-radius:3px;border:1px solid;transition:all .4s ease}
+.dpill.easy{color:var(--gr);border-color:var(--gr);background:rgba(0,255,106,.07);box-shadow:0 0 10px rgba(0,255,106,.2),inset 0 0 8px rgba(0,255,106,.05)}
+.dpill.medium{color:var(--am);border-color:var(--am);background:rgba(255,170,0,.07);box-shadow:0 0 10px rgba(255,170,0,.2)}
+.dpill.hard{color:var(--rd);border-color:var(--rd);background:rgba(255,34,51,.07);box-shadow:0 0 10px rgba(255,34,51,.2)}
+.rtag{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--mu);background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 6px}
+.pip{width:7px;height:7px;border-radius:50%;background:var(--or);box-shadow:0 0 8px var(--or);animation:pipAnim 1.4s infinite}
+@keyframes pipAnim{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+
+/* ── SIGNAL SECTION ── */
+.ss{flex-shrink:0;display:flex;flex-direction:column;background:var(--bg2);border-bottom:2px solid #261830}
+
+/* STATUS */
+.sr{display:flex;align-items:center;gap:11px;padding:9px 14px;border-bottom:1px solid var(--bd)}
+.av{width:36px;height:36px;flex-shrink:0;border-radius:7px;border:1.5px solid var(--or);
+  box-shadow:0 0 14px rgba(255,94,0,.3);background:#180a00;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.av::after{content:'';position:absolute;top:-40%;left:0;right:0;height:35%;
+  background:linear-gradient(180deg,transparent,rgba(255,94,0,.3),transparent);
+  animation:avScan 2.2s linear infinite}
+@keyframes avScan{from{top:-40%}to{top:110%}}
+.si{flex:1}
+.slbl{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--mu);letter-spacing:1.5px}
+.smsg{font-size:.86rem;font-weight:700;color:var(--wh);margin-top:1px;line-height:1.2}
+
+/* WAIT */
+.wb{padding:12px 14px 6px;display:flex;align-items:center;gap:12px}
+.wt{font-size:.77rem;color:var(--mu);line-height:1.6}
+.wt strong{color:var(--or)}
+
+/* MAP BLOCK */
+.mb{display:none;padding:9px 13px 3px}
+.ml{font-family:'Bebas Neue',sans-serif;font-size:.72rem;letter-spacing:3px;color:var(--mu);
+  display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.ml::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* THE MAP CANVAS WRAPPER */
+.map-wrap{width:100%;border-radius:11px;overflow:hidden;border:1px solid #2a1838;
+  background:#090611;position:relative;
+  box-shadow:0 8px 28px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,94,0,.07)}
+.map-canvas{display:block;width:100%;height:190px}
+
+/* Signal footer */
+.sf{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  border-top:1px solid rgba(0,255,106,.12);background:rgba(0,255,106,.04)}
+.st{flex:1;font-size:.79rem;font-weight:700;color:var(--gr);line-height:1.2}
+.sm{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:var(--am);letter-spacing:1px;
+  text-shadow:0 0 18px rgba(255,170,0,.6)}
+
+/* CONF */
+.cr{display:flex;align-items:center;gap:8px;padding:5px 13px 7px}
+.cl{font-family:'Share Tech Mono',monospace;font-size:.57rem;color:var(--mu);letter-spacing:1px;white-space:nowrap}
+.ct{flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
+.cf{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--or),var(--am));transition:width 1.2s cubic-bezier(.4,0,.2,1);width:0%}
+.cv{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--am);font-weight:700;white-space:nowrap}
+
+/* BTNS */
+.br{display:flex;gap:8px;padding:7px 13px 11px}
+.bm{flex:1;padding:13px;border-radius:10px;cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;
+  border:1.5px solid var(--or);color:var(--or);
+  background:linear-gradient(135deg,rgba(255,94,0,.16),rgba(255,94,0,.03));
+  position:relative;overflow:hidden;transition:all .2s}
+.bm:not(:disabled){box-shadow:0 0 18px rgba(255,94,0,.18),inset 0 1px 0 rgba(255,94,0,.12)}
+.bm:disabled{opacity:.3;pointer-events:none}
+.bm:active{transform:scale(.98)}
+.bn{padding:13px 13px;border-radius:10px;cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;
+  border:1.5px solid var(--gr);color:var(--gr);
+  background:linear-gradient(135deg,rgba(0,255,106,.12),rgba(0,255,106,.02));
+  display:none;box-shadow:0 0 12px rgba(0,255,106,.14);transition:all .2s}
+.bn.on{display:block}
+.bn:active{transform:scale(.97)}
+
+/* ── GAME ── */
+.gs{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.gt{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:7px 13px;background:var(--bg3);border-bottom:1px solid var(--bd)}
+.gtag{font-family:'Bebas Neue',sans-serif;font-size:.78rem;letter-spacing:3px;color:var(--mu)}
+.ug{display:flex;gap:5px}
+.ui{background:#0a0810;border:1px solid var(--bd);border-radius:6px;padding:5px 9px;
+  color:var(--tx);font-family:'Share Tech Mono',monospace;font-size:.6rem;width:150px;outline:none;transition:.2s}
+.ui:focus{border-color:var(--or);box-shadow:0 0 8px rgba(255,94,0,.12)}
+.ub{background:rgba(255,94,0,.14);border:1px solid var(--or);border-radius:6px;
+  color:var(--or);padding:5px 11px;font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:1px;cursor:pointer}
+.gb{flex:1;position:relative;background:#07050b;overflow:hidden;min-height:0}
+.gp{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;text-align:center;padding:20px;
+  background:radial-gradient(ellipse at 50% 85%,rgba(255,94,0,.05),transparent 60%)}
+.gpt{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:3px;color:var(--wh)}
+.gps{font-size:.73rem;color:var(--mu);line-height:1.6;max-width:210px}
+.gif{width:100%;height:100%;border:none;display:none}
+
+/* ── TELEGRAM + INSTALL BUTTONS ── */
+.bottom-actions{flex-shrink:0;display:flex;flex-direction:column;background:var(--bg2);border-top:2px solid #261830;z-index:10}
+.btn-tg{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:12px 16px;
+  background:linear-gradient(135deg,rgba(36,161,222,.2),rgba(36,161,222,.04));
+  border:none;border-bottom:1px solid rgba(36,161,222,.15);
+  color:#54d4f5;cursor:pointer;width:100%;
+  font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;transition:all .2s;
+}
+.btn-tg:active{background:rgba(36,161,222,.3)}
+.btn-install{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:12px 16px;
+  background:linear-gradient(135deg,rgba(255,94,0,.14),rgba(255,94,0,.03));
+  border:none;color:var(--or);cursor:pointer;width:100%;
+  font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;transition:all .2s;
+}
+.btn-install:active{background:rgba(255,94,0,.22)}
+
+/* ── INSTALL MODAL ── */
+.install-modal{position:fixed;inset:0;z-index:300;background:rgba(8,7,10,.95);display:none;flex-direction:column;align-items:center;justify-content:flex-end}
+.install-modal.on{display:flex}
+.install-sheet{width:100%;max-width:480px;background:var(--bg2);border-radius:20px 20px 0 0;border-top:2px solid var(--or);box-shadow:0 -8px 40px rgba(255,94,0,.18);padding:20px 18px 34px;animation:slideUp .35s cubic-bezier(.34,1.26,.64,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.ish-handle{width:36px;height:4px;border-radius:2px;background:var(--bd);margin:0 auto 16px}
+.ish-title{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:3px;color:var(--or);text-align:center;margin-bottom:3px}
+.ish-sub{font-size:.73rem;color:var(--mu);text-align:center;margin-bottom:16px;line-height:1.5}
+.ish-os{display:flex;gap:8px;margin-bottom:16px}
+.ish-os-btn{flex:1;padding:9px 6px;border-radius:8px;border:1px solid var(--bd);background:var(--bg3);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;color:var(--mu);transition:all .2s}
+.ish-os-btn.active{border-color:var(--or);color:var(--or);background:rgba(255,94,0,.08)}
+.ish-steps{display:flex;flex-direction:column;gap:11px;margin-bottom:18px;min-height:80px}
+.ish-step{display:flex;align-items:flex-start;gap:11px}
+.ish-num{width:24px;height:24px;flex-shrink:0;border-radius:50%;background:rgba(255,94,0,.14);border:1px solid var(--or);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.82rem;color:var(--or);margin-top:2px}
+.ish-text{font-size:.8rem;line-height:1.55;color:var(--tx)}
+.ish-text strong{color:var(--wh)}
+.ish-icon{font-size:.95rem}
+.ish-close{width:100%;padding:13px;border-radius:10px;background:rgba(255,94,0,.12);border:1.5px solid var(--or);color:var(--or);font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;cursor:pointer}
+
+/* ── OVERLAY ── */
+.ov{position:fixed;inset:0;z-index:200;background:rgba(8,7,10,.97);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px}
+.ov.on{display:flex}
+.ov::before{content:'';position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--or),var(--am),var(--or),transparent);
+  box-shadow:0 0 28px var(--go);animation:ovScan 1.7s linear infinite;top:0}
+@keyframes ovScan{from{top:-2px}to{top:100vh}}
+.ov::after{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 37px,rgba(255,94,0,.025) 37px,rgba(255,94,0,.025) 38px);
+  pointer-events:none}
+.or-rings{position:relative;width:124px;height:124px;display:flex;align-items:center;justify-content:center}
+.rg{position:absolute;border-radius:50%;border:2px solid transparent}
+.rg1{inset:0;border-top-color:var(--or);border-right-color:rgba(255,94,0,.28);animation:rSpin .75s linear infinite}
+.rg2{inset:13px;border-bottom-color:var(--am);border-left-color:rgba(255,170,0,.28);animation:rSpin 1.25s linear infinite reverse}
+.rg3{inset:24px;border-top-color:rgba(255,94,0,.35);animation:rSpin 1.9s linear infinite}
+@keyframes rSpin{to{transform:rotate(360deg)}}
+@keyframes emojiWait{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes emojiPanic{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.1) rotate(4deg)}}
+.ov-cvs{width:72px;height:72px;position:relative;z-index:1}
+.ov-t{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:5px;
+  color:var(--or);text-shadow:0 0 28px var(--go),0 0 56px rgba(255,94,0,.18);text-align:center}
+.ov-s{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--mu);letter-spacing:2px;text-align:center}
+.ov-pg{width:210px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
+.ov-pf{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--or),var(--am));
+  transition:width 2.1s cubic-bezier(.25,.1,.1,1);width:0%}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="tb">
+  <div class="logo"><span class="logo-fire">🔥</span><em>CHICKEN</em>AI</div>
+  <div class="tb-r">
+    <div class="dpill easy" id="dpill">FÁCIL</div>
+    <div class="rtag" id="rtag">R#001</div>
+    <div class="pip"></div>
+  </div>
+</div>
+
+<!-- SIGNAL SECTION -->
+<div class="ss">
+  <div class="sr">
+    <div class="av">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="#ff5e00" stroke-width="1.2" opacity=".4"/>
+        <path d="M8 12h8M12 8v8" stroke="#ffaa00" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="2.5" fill="#ff5e00" opacity=".85"/>
+        <circle cx="7.5" cy="9.5" r=".9" fill="#ffaa00" opacity=".6"/>
+        <circle cx="16.5" cy="9.5" r=".9" fill="#ffaa00" opacity=".6"/>
+        <circle cx="7.5" cy="14.5" r=".9" fill="#ffaa00" opacity=".6"/>
+        <circle cx="16.5" cy="14.5" r=".9" fill="#ffaa00" opacity=".6"/>
+      </svg>
+    </div>
+    <div class="si">
+      <div class="slbl" id="slbl">SISTEMA LISTO</div>
+      <div class="smsg" id="smsg">Esperando análisis de la ronda</div>
+    </div>
+  </div>
+
+  <!-- WAITING -->
+  <div class="wb" id="wblock">
+    <span style="font-size:2.8rem;flex-shrink:0;filter:drop-shadow(0 2px 8px rgba(255,94,0,.4));animation:emojiWait 1.8s ease-in-out infinite;display:inline-block">🐔</span>
+    <div class="wt">Presiona <strong>ANALIZAR</strong> antes de cada ronda. La IA revela cuántas casillas avanzar con seguridad.</div>
+  </div>
+
+  <!-- MAP -->
+  <div class="mb" id="mblock">
+    <div class="ml">🗺 MAPA DE LA RONDA</div>
+    <div class="map-wrap">
+      <canvas id="mapCanvas" class="map-canvas"></canvas>
+      <div class="sf">
+        <div class="st" id="stext"></div>
+        <div class="sm" id="smult"></div>
+      </div>
+    </div>
+    <div class="cr">
+      <div class="cl">CONFIANZA</div>
+      <div class="ct"><div class="cf" id="cfill"></div></div>
+      <div class="cv" id="cval"></div>
+    </div>
+  </div>
+
+  <div class="br">
+    <button class="bm" id="btnM" onclick="startAnalysis()">⚡ ANALIZAR RONDA</button>
+    <button class="bn" id="btnN" onclick="reanalyze()">🔄 NOVA</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="gs">
+  <div class="gt">
+    <div class="gtag">▶ REFLEJAR JUEGO</div>
+    <div class="ug">
+      <input class="ui" id="urlI" type="url" placeholder="URL de Melbet...">
+      <button class="ub" onclick="loadGame()">IR</button>
+    </div>
+  </div>
+  <div class="gb">
+    <div class="gp" id="gph">
+      <span style="font-size:3.5rem;filter:drop-shadow(0 4px 16px rgba(255,94,0,.4));animation:emojiWait 2s ease-in-out infinite;display:inline-block">🐔</span>
+      <div class="gpt">ABRE EL JUEGO</div>
+      <div class="gps">Pega la URL del Chicken Road de Melbet arriba para reflejar el juego mientras sigues las señales</div>
+    </div>
+    <iframe class="gif" id="gframe"></iframe>
+  </div>
+</div>
+</div>
+
+<!-- TELEGRAM + INSTALL BUTTONS -->
+<div class="bottom-actions">
+  <button class="btn-tg" onclick="window.open('https://t.me/TU_CANAL_AQUI','_blank')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="#24A1DE" opacity=".2"/>
+      <path d="M7.5 11.5l2.8 1.05 1.1 3.45 1.7-2.1 3.6 2.6L18.5 7 7.5 11.5z" fill="#24A1DE"/>
+      <path d="M10.3 12.55l.35 2.45 1.1-2.1-1.45-.35z" fill="#1a85b8" opacity=".6"/>
+    </svg>
+    📲 ÚNETE AL TELEGRAM · SEÑALES · TESTIMONIOS · JUEGOS EXCLUSIVOS
+  </button>
+  <button class="btn-install" onclick="openInstall()">
+    📲 INSTALAR APP EN TU CELULAR · ANDROID &amp; iOS
+  </button>
+</div>
+
+<!-- INSTALL MODAL -->
+<div class="install-modal" id="installModal" onclick="closeInstall(event)">
+  <div class="install-sheet" onclick="event.stopPropagation()">
+    <div class="ish-handle"></div>
+    <div class="ish-title">📲 INSTALAR CHICKENAI</div>
+    <div class="ish-sub">Guárdalo como app en tu pantalla de inicio — gratis, sin tienda de apps</div>
+    <div class="ish-os">
+      <div class="ish-os-btn active" id="iosBtn" onclick="setOS('ios')">🍎 iPhone / iOS</div>
+      <div class="ish-os-btn" id="andBtn" onclick="setOS('android')">🤖 Android</div>
+    </div>
+    <div class="ish-steps" id="ishSteps">
+      <!-- iOS steps by default -->
+      <div class="ish-step">
+        <div class="ish-num">1</div>
+        <div class="ish-text"><strong>Abre este enlace en Safari</strong> — no en Chrome ni otro navegador</div>
+      </div>
+      <div class="ish-step">
+        <div class="ish-num">2</div>
+        <div class="ish-text">Toca el botón <strong class="ish-icon">⬆ Compartir</strong> en la barra de abajo de Safari</div>
+      </div>
+      <div class="ish-step">
+        <div class="ish-num">3</div>
+        <div class="ish-text">Selecciona <strong>"Añadir a pantalla de inicio"</strong> y confirma</div>
+      </div>
+    </div>
+    <button class="ish-close" onclick="closeInstall()">✓ ENTENDIDO</button>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="ov" id="overlay">
+  <div class="or-rings">
+    <div class="rg rg1"></div><div class="rg rg2"></div><div class="rg rg3"></div>
+    <span class="ov-cvs" style="font-size:3rem;display:flex;align-items:center;justify-content:center;animation:emojiPanic .35s ease-in-out infinite alternate">🔥🐔🔥</span>
+  </div>
+  <div class="ov-t">IA ANALIZANDO</div>
+  <div class="ov-s" id="ovStep">Iniciando escaneo...</div>
+  <div class="ov-pg"><div class="ov-pf" id="ovPf"></div></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CHICKEN DRAWING ENGINE
+//  Draws a beautiful cartoon chicken on a canvas
+// ═══════════════════════════════════════════════
+
+function drawChicken(ctx, x, y, scale, opts = {}) {
+  const { jumping = false, t = 0 } = opts;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  // ── Palette (matches reference image exactly) ──
+  const BODY   = '#d4692a'; // deep orange body
+  const BELLY  = '#f5c97a'; // warm biscuit belly
+  const DARK   = '#b84a18'; // dark orange shading
+  const COMB   = '#cc1a1a'; // deep red comb
+  const WATTLE = '#cc1a1a';
+  const BEAK   = '#e8b840'; // amber beak
+  const LEG    = '#d4a020';
+  const TOE    = '#c89018';
+  const OUTLINE= '#2a1000'; // dark brown outline
+  const EYE_W  = '#ffffff';
+  const EYE_I  = '#2d7a2d'; // GREEN iris like reference
+  const EYE_P  = '#111111';
+
+  function stroke(w) { ctx.strokeStyle = OUTLINE; ctx.lineWidth = w; ctx.stroke(); }
+  function fill(col) { ctx.fillStyle = col; ctx.fill(); }
+
+  // ── TAIL feathers (behind body, draw first) ──
+  ctx.save();
+  ctx.translate(-20, -10);
+  // 3 layered fan feathers
+  const fanAngles = [-0.55, -0.15, 0.2];
+  const fanCols   = [DARK, BODY, '#c05820'];
+  for (let i = 0; i < 3; i++) {
+    ctx.save();
+    ctx.rotate(fanAngles[i]);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-6, -14, -4, -28, 2, -34);
+    ctx.bezierCurveTo(8, -28, 8, -14, 0, 0);
+    ctx.fillStyle = fanCols[i];
+    ctx.fill();
+    stroke(1.2);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // ── LEGS (drawn before body) ──
+  const legKick = jumping ? Math.sin(t * 9) * 5 : 0;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+  if (jumping) {
+    // Left leg — kicked back-up
+    ctx.strokeStyle = LEG; ctx.lineWidth = 3.2;
+    ctx.beginPath(); ctx.moveTo(-8, 14); ctx.lineTo(-20 + legKick, 4); ctx.stroke();
+    ctx.strokeStyle = TOE; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-20+legKick,4); ctx.lineTo(-26+legKick,-1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-20+legKick,4); ctx.lineTo(-20+legKick,-2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-20+legKick,4); ctx.lineTo(-14+legKick,-1); ctx.stroke();
+    // Right leg — kicked forward-up
+    ctx.strokeStyle = LEG; ctx.lineWidth = 3.2;
+    ctx.beginPath(); ctx.moveTo(4, 16); ctx.lineTo(18 - legKick, 4); ctx.stroke();
+    ctx.strokeStyle = TOE; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(18-legKick,4); ctx.lineTo(24-legKick,-1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(18-legKick,4); ctx.lineTo(18-legKick,-2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(18-legKick,4); ctx.lineTo(12-legKick,-1); ctx.stroke();
+  } else {
+    // Left leg standing
+    ctx.strokeStyle = LEG; ctx.lineWidth = 3.2;
+    ctx.beginPath(); ctx.moveTo(-8,14); ctx.lineTo(-10,26); ctx.stroke();
+    ctx.strokeStyle = TOE; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-10,26); ctx.lineTo(-16,32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-10,26); ctx.lineTo(-10,33); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-10,26); ctx.lineTo(-4,32);  ctx.stroke();
+    // Right leg standing
+    ctx.strokeStyle = LEG; ctx.lineWidth = 3.2;
+    ctx.beginPath(); ctx.moveTo(5,14); ctx.lineTo(7,26); ctx.stroke();
+    ctx.strokeStyle = TOE; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(7,26); ctx.lineTo(1,32);  ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(7,26); ctx.lineTo(7,33);  ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(7,26); ctx.lineTo(13,32); ctx.stroke();
+  }
+
+  // ── BODY — big rounded egg shape ──
+  ctx.beginPath();
+  ctx.ellipse(0, 8, 21, 19, -0.08, 0, Math.PI*2);
+  fill(BODY); stroke(2);
+
+  // belly highlight (light biscuit area)
+  ctx.beginPath();
+  ctx.ellipse(4, 12, 13, 12, -0.1, 0, Math.PI*2);
+  fill(BELLY);
+
+  // subtle body shading curve at bottom
+  ctx.beginPath();
+  ctx.ellipse(0, 16, 17, 10, 0, 0, Math.PI);
+  fill(DARK);
+
+  // ── RIGHT WING (visible, on body) ──
+  ctx.save();
+  ctx.translate(jumping ? 10 : 12, 2);
+  ctx.rotate(jumping ? -0.5 : -0.18);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 8, 15, 0.15, 0, Math.PI*2);
+  fill('#c05820'); stroke(1.5);
+  // feather lines
+  ctx.strokeStyle = DARK; ctx.lineWidth = 0.8; ctx.globalAlpha = 0.5;
+  for (let fi = -3; fi <= 3; fi += 2) {
+    ctx.beginPath();
+    ctx.moveTo(-5, fi*2.5);
+    ctx.lineTo(5, fi*2.5);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // ── NECK / CHEST feathering (fluffy collar like reference) ──
+  // Red scalloped collar below head
+  for (let ci = 0; ci < 6; ci++) {
+    const angle = -0.7 + ci * 0.28;
+    const rx = Math.cos(angle) * 14 + 8;
+    const ry = Math.sin(angle) * 14 - 14;
+    ctx.beginPath();
+    ctx.arc(rx, ry, 5, 0, Math.PI*2);
+    fill(COMB);
+  }
+
+  // ── HEAD — large round ──
+  ctx.beginPath();
+  ctx.arc(10, -18, 17, 0, Math.PI*2);
+  fill(BODY); stroke(2);
+
+  // ── COMB — big fluffy multi-bump top ──
+  // Base rectangle
+  ctx.fillStyle = COMB;
+  ctx.beginPath();
+  ctx.roundRect(2, -35, 16, 8, 3);
+  ctx.fill(); stroke(1.5);
+  // 4 round bumps on top
+  const bumpX = [3, 7, 11, 15];
+  for (let bx of bumpX) {
+    ctx.beginPath();
+    ctx.arc(bx + 2, -36, 5, 0, Math.PI*2);
+    fill(COMB); stroke(1.5);
+  }
+
+  // ── WATTLE — two round red lobes below beak ──
+  ctx.beginPath();
+  ctx.ellipse(8, -6, 5, 6, -0.15, 0, Math.PI*2);
+  fill(WATTLE); stroke(1.2);
+  ctx.beginPath();
+  ctx.ellipse(14, -5, 4, 5, 0.15, 0, Math.PI*2);
+  fill(WATTLE); stroke(1.2);
+
+  // ── BEAK ──
+  ctx.beginPath();
+  ctx.moveTo(26, -19);
+  ctx.lineTo(35, -17);
+  ctx.lineTo(26, -15);
+  ctx.closePath();
+  fill(BEAK); stroke(1.5);
+  // beak dividing line
+  ctx.strokeStyle = '#c09028'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(26,-17); ctx.lineTo(34,-17); ctx.stroke();
+
+  // ── EYE — big expressive green like reference ──
+  const ex = 18, ey = -22;
+  // outer white
+  ctx.beginPath();
+  ctx.arc(ex, ey, 8, 0, Math.PI*2);
+  fill(EYE_W); stroke(1.8);
+
+  // iris (green)
+  ctx.beginPath();
+  ctx.arc(ex + (jumping ? 1 : 0.5), ey + (jumping ? 1.5 : 0.5), 5.5, 0, Math.PI*2);
+  fill(EYE_I);
+
+  // pupil
+  ctx.beginPath();
+  ctx.arc(ex + (jumping ? 1.5 : 0.8), ey + (jumping ? 2 : 0.8), 3, 0, Math.PI*2);
+  fill(EYE_P);
+
+  // shine (2 dots like reference)
+  ctx.fillStyle = EYE_W;
+  ctx.beginPath(); ctx.arc(ex + (jumping?2.5:1.8), ey + (jumping?0.5:-0.5), 1.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(ex + (jumping?0:-.5), ey + (jumping?2:1.5), 0.9, 0, Math.PI*2); ctx.fill();
+
+  // eyebrow (slight arch)
+  ctx.strokeStyle = OUTLINE; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(ex - 7, ey - 9);
+  ctx.quadraticCurveTo(ex, jumping ? ey - 14 : ey - 12, ex + 7, ey - 9);
+  ctx.stroke();
+
+  // panic sweat if jumping
+  if (jumping) {
+    ctx.fillStyle = 'rgba(120,200,255,0.9)';
+    ctx.beginPath();
+    ctx.moveTo(ex + 10, ey + 2);
+    ctx.bezierCurveTo(ex+8, ey+5, ex+8, ey+11, ex+10, ey+11);
+    ctx.bezierCurveTo(ex+12, ey+11, ex+12, ey+5, ex+10, ey+2);
+    ctx.fill();
+    // speed lines
+    ctx.strokeStyle = 'rgba(255,220,80,0.55)'; ctx.lineWidth = 1.5;
+    for (let li = 0; li < 3; li++) {
+      ctx.beginPath();
+      ctx.moveTo(-28 - li*5, -4 + li*6);
+      ctx.lineTo(-18 - li*5, -4 + li*6);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+
+// Draw flame at (x,y) with scale and flicker time t (0-2π)
+function drawFlame(ctx, x, y, scale, t) {
+  ctx.save();
+  ctx.translate(x, y);
+  const s = scale * (1 + Math.sin(t * 3) * 0.08);
+  ctx.scale(s, s);
+
+  // outer flame
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(-8, -8, -10, -20, 0, -28 + Math.sin(t*2)*3);
+  ctx.bezierCurveTo(10, -20, 8, -8, 0, 0);
+  ctx.fillStyle = '#ff5e00';
+  ctx.fill();
+
+  // middle flame
+  ctx.beginPath();
+  ctx.moveTo(0, -2);
+  ctx.bezierCurveTo(-5, -10, -6, -20, 0, -24 + Math.sin(t*2.5)*2);
+  ctx.bezierCurveTo(6, -20, 5, -10, 0, -2);
+  ctx.fillStyle = '#ffaa00';
+  ctx.fill();
+
+  // inner bright
+  ctx.beginPath();
+  ctx.moveTo(0, -4);
+  ctx.bezierCurveTo(-2, -12, -3, -18, 0, -20 + Math.sin(t*3)*1.5);
+  ctx.bezierCurveTo(3, -18, 2, -12, 0, -4);
+  ctx.fillStyle = '#ffd740';
+  ctx.fill();
+
+  // core white
+  ctx.beginPath();
+  ctx.ellipse(0, -8, 2, 5, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,240,0.7)';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// Draw a smoke puff at (x,y), t drives animation (0-1 = birth-death)
+function drawSmoke(ctx, x, y, t) {
+  const alpha = Math.max(0, 0.5 - t * 0.5);
+  const r = 4 + t * 10;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.arc(x, y - t * 22, r, 0, Math.PI*2);
+  ctx.fillStyle = '#555';
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// idle/placeholder/overlay now use emoji — no canvas needed
+
+// ═══════════════════════════════════════════════
+//  MAP CANVAS — cells + animated jumping chicken
+// ═══════════════════════════════════════════════
+const MULTS = [1.03,1.07,1.12,1.17,1.23,1.29,1.36,1.44,1.53,1.63];
+const CELL_W = 60, CELL_H = 100, MAP_H = 190;
+const START_X = 8;
+let mapRAF = null, mapState = null;
+
+function stopMap() {
+  if (mapRAF) { cancelAnimationFrame(mapRAF); mapRAF = null; }
+}
+
+// Easing
+function easeInOut(t) { return t < .5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function startMap(houses, total) {
+  stopMap();
+  const canvas = document.getElementById('mapCanvas');
+  const wrap = document.querySelector('.map-wrap');
+  const totalW = START_X + 4 + total * (CELL_W + 6) + 10;
+  canvas.width = totalW;
+  canvas.style.width = '100%';
+  canvas.height = MAP_H;
+  canvas.style.height = MAP_H + "px";
+
+  const ctx = canvas.getContext('2d');
+
+  // Chicken state
+  let ckCell = -1;       // current cell index (-1 = start)
+  let ckT = 0;           // time in current cell (0→1)
+  let ckPhase = 'land';  // 'jump','land','idle'
+  let ckX = START_X + 4 + CELL_W * 0.4; // starting X
+  let ckY = MAP_H - 38;
+  let jumpFromX = ckX;
+  let jumpToX = ckX;
+  let flameT = 0;
+  let smokeT = [0, 0.33, 0.66]; // 3 staggered smoke puffs
+  let frameT = 0;
+
+  // Cell positions
+  function cellCenterX(i) {
+    return START_X + 4 + i * (CELL_W + 6) + CELL_W / 2;
+  }
+
+  function drawFrame() {
+    ctx.clearRect(0, 0, canvas.width, MAP_H);
+
+    // ── background floor ──
+    const grad = ctx.createLinearGradient(0, 0, 0, MAP_H);
+    grad.addColorStop(0, '#0c0915');
+    grad.addColorStop(1, '#090611');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, MAP_H);
+
+    // vertical grid lines (perspective)
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < canvas.width; gx += (CELL_W + 6)) {
+      ctx.beginPath(); ctx.moveTo(gx + START_X, 0); ctx.lineTo(gx + START_X, MAP_H); ctx.stroke();
+    }
+
+    // bottom glow
+    const floorGrad = ctx.createLinearGradient(0, MAP_H - 20, 0, MAP_H);
+    floorGrad.addColorStop(0, 'transparent');
+    floorGrad.addColorStop(1, 'rgba(255,94,0,0.04)');
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, MAP_H - 20, canvas.width, 20);
+
+    // ── CELLS ──
+    for (let i = 0; i < total; i++) {
+      const cx = START_X + 4 + i * (CELL_W + 6);
+      const cy = MAP_H - CELL_H - 2;
+      const isSafe = i < houses;
+      const isDanger = i === houses;
+
+      // cell shadow
+      ctx.save();
+      ctx.shadowColor = isSafe ? 'rgba(0,255,106,0.3)' : isDanger ? 'rgba(255,94,0,0.25)' : 'transparent';
+      ctx.shadowBlur = isSafe ? 14 : 12;
+
+      // cell background
+      const cGrad = ctx.createLinearGradient(cx, cy, cx, cy + CELL_H);
+      if (isSafe) {
+        cGrad.addColorStop(0, 'rgba(0,255,106,0.18)');
+        cGrad.addColorStop(1, 'rgba(0,255,106,0.04)');
+      } else if (isDanger) {
+        cGrad.addColorStop(0, 'rgba(255,94,0,0.18)');
+        cGrad.addColorStop(1, 'rgba(255,34,51,0.06)');
+      } else {
+        cGrad.addColorStop(0, 'rgba(255,255,255,0.04)');
+        cGrad.addColorStop(1, 'rgba(0,0,0,0.02)');
+      }
+      roundRect(ctx, cx, cy, CELL_W, CELL_H, 10);
+      ctx.fillStyle = cGrad;
+      ctx.fill();
+
+      // cell border
+      ctx.strokeStyle = isSafe ? 'rgba(0,255,106,0.7)' : isDanger ? 'rgba(255,94,0,0.7)' : 'rgba(60,40,80,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // oven grill bottom strip
+      ctx.save();
+      ctx.beginPath();
+      roundRect(ctx, cx + 2, cy + CELL_H - 10, CELL_W - 4, 9, [0, 0, 8, 8]);
+      ctx.clip();
+      for (let gx = cx + 2; gx < cx + CELL_W; gx += 6) {
+        ctx.beginPath(); ctx.moveTo(gx, cy + CELL_H - 10); ctx.lineTo(gx, cy + CELL_H);
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 3; ctx.stroke();
+      }
+      ctx.restore();
+
+      // cell number
+      ctx.font = '500 9px "Share Tech Mono"';
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.fillText(i + 1, cx + 5, cy + 13);
+
+      // multiplier label
+      const mult = MULTS[i] || ((1 + (i+1)*.07).toFixed(2));
+      ctx.font = '700 10px "Share Tech Mono"';
+      ctx.fillStyle = isSafe ? 'rgba(0,255,106,0.9)' : isDanger ? 'rgba(255,150,50,0.9)' : 'rgba(100,80,120,0.6)';
+      ctx.textAlign = 'center';
+      ctx.fillText(mult + 'x', cx + CELL_W / 2, cy + 22);
+      ctx.textAlign = 'left';
+
+      // safe checkmark
+      if (isSafe) {
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillStyle = '#00ff6a';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#00ff6a'; ctx.shadowBlur = 10;
+        ctx.fillText('✓', cx + CELL_W / 2, cy + CELL_H / 2 + 14);
+        ctx.shadowBlur = 0;
+        ctx.textAlign = 'left';
+      }
+
+      // danger flames
+      if (isDanger) {
+        drawFlame(ctx, cx + CELL_W / 2 - 8, cy + CELL_H - 5, 0.75, flameT * 4);
+        drawFlame(ctx, cx + CELL_W / 2 + 8, cy + CELL_H - 5, 0.62, flameT * 4 + 1.5);
+        drawFlame(ctx, cx + CELL_W / 2, cy + CELL_H - 10, 0.68, flameT * 4 + 0.8);
+      }
+
+      // inactive dim overlay
+      if (!isSafe && !isDanger) {
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        roundRect(ctx, cx, cy, CELL_W, CELL_H, 10);
+        ctx.fill();
+      }
+    }
+
+    // ── CHICKEN JUMP ANIMATION ──
+    frameT += 0.016;
+    flameT += 0.016;
+
+    // advance cell
+    ckT += 0.025;
+    if (ckT >= 1) {
+      ckT = 0;
+      ckCell++;
+      if (ckCell < houses) {
+        jumpFromX = ckX;
+        jumpToX = cellCenterX(ckCell);
+        ckPhase = 'jump';
+      } else {
+        ckCell = -1; // reset loop
+        jumpFromX = START_X + 4 + CELL_W * 0.4;
+        jumpToX = jumpFromX;
+        ckX = jumpFromX;
+        ckPhase = 'idle';
+      }
+    }
+
+    let drawY = MAP_H - 28;
+    let jumping = false;
+    if (ckPhase === 'jump') {
+      const prog = easeInOut(ckT);
+      ckX = jumpFromX + (jumpToX - jumpFromX) * prog;
+      const arc = Math.sin(prog * Math.PI);
+      drawY = (MAP_H - 38) - arc * 60;
+      jumping = true;
+    } else {
+      // idle bob
+      drawY = (MAP_H - 38) + Math.sin(frameT * 3) * 2;
+    }
+
+    // Shadow under chicken
+    ctx.save();
+    const shadowAlpha = jumping ? 0.15 : 0.25;
+    const shadowScaleX = jumping ? 0.5 : 0.8;
+    ctx.beginPath();
+    ctx.ellipse(ckX, MAP_H - 6, 14 * shadowScaleX, 4, 0, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
+    ctx.fill();
+    ctx.restore();
+
+    // Smoke puffs (while jumping)
+    if (ckPhase === 'jump' && ckT > 0.1) {
+      smokeT = smokeT.map(t => {
+        const nt = (t + 0.008) % 1;
+        drawSmoke(ctx, ckX - 5 + Math.random() * 3, drawY - 10, nt);
+        return nt;
+      });
+    }
+
+    drawChicken(ctx, ckX, drawY - 4, 0.82, {
+      jumping,
+      t: frameT
+    });
+
+    // Mini flames under chicken
+    drawFlame(ctx, ckX - 6, drawY + 22, 0.48, flameT * 4);
+    drawFlame(ctx, ckX + 6, drawY + 24, 0.4, flameT * 4 + 1.2);
+
+    mapRAF = requestAnimationFrame(drawFrame);
+  }
+
+  drawFrame();
+}
+
+// roundRect helper
+// roundRect polyfill
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    if(typeof r==='number') r=[r,r,r,r];
+    this.beginPath();
+    this.moveTo(x+r[0],y);
+    this.lineTo(x+w-r[1],y);
+    this.quadraticCurveTo(x+w,y,x+w,y+r[1]);
+    this.lineTo(x+w,y+h-r[2]);
+    this.quadraticCurveTo(x+w,y+h,x+w-r[2],y+h);
+    this.lineTo(x+r[3],y+h);
+    this.quadraticCurveTo(x,y+h,x,y+h-r[3]);
+    this.lineTo(x,y+r[0]);
+    this.quadraticCurveTo(x,y,x+r[0],y);
+    this.closePath();
+    return this;
+  };
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (typeof r === 'number') r = [r,r,r,r];
+  ctx.beginPath();
+  ctx.moveTo(x + r[0], y);
+  ctx.lineTo(x + w - r[1], y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r[1]);
+  ctx.lineTo(x + w, y + h - r[2]);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r[2], y + h);
+  ctx.lineTo(x + r[3], y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r[3]);
+  ctx.lineTo(x, y + r[0]);
+  ctx.quadraticCurveTo(x, y, x + r[0], y);
+  ctx.closePath();
+}
+
+// ═══════════════════════════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════════════════════════
+const DIFFS   = ['easy','medium','hard'];
+const DLBLS   = ['FÁCIL','NORMAL','DIFÍCIL'];
+const RANGES  = {easy:[2,3],medium:[3,5],hard:[5,7]};
+const CONFS   = {easy:[82,94],medium:[74,88],hard:[65,80]};
+const STEPS   = [
+  'Escaneando patrón de la ronda...',
+  'Calculando índice de riesgo...',
+  'Identificando casillas seguras...',
+  'Validando modelo predictivo...',
+  'Generando mapa del tesoro...'
+];
+
+let round = 1, diffIdx = 0, busy = false;
+const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+async function startAnalysis() {
+  if (busy) return;
+  busy = true;
+  document.getElementById('btnM').disabled = true;
+  document.getElementById('btnN').classList.remove('on');
+  document.getElementById('mblock').style.display = 'none';
+  document.getElementById('wblock').style.display = 'none';
+  stopMap();
+
+  const ov = document.getElementById('overlay');
+  const pf = document.getElementById('ovPf');
+  const se = document.getElementById('ovStep');
+  ov.classList.add('on');
+  pf.style.transition = 'none';
+  pf.style.width = '0%';
+  await sleep(50);
+  pf.style.transition = 'width 2.1s cubic-bezier(.25,.1,.1,1)';
+
+  for (let i = 0; i < STEPS.length; i++) {
+    se.textContent = STEPS[i];
+    pf.style.width = ((i+1)/STEPS.length*90) + '%';
+    await sleep(i === 0 ? 120 : 560);
+  }
+  pf.style.width = '100%';
+  await sleep(320);
+  ov.classList.remove('on');
+
+  const d = DIFFS[diffIdx % 3];
+  const [mn,mx] = RANGES[d];
+  const [cMn,cMx] = CONFS[d];
+  renderSignal({ diff: d, houses: rand(mn,mx), confidence: rand(cMn,cMx) });
+
+  diffIdx++;
+  round++;
+  document.getElementById('rtag').textContent = 'R#' + String(round).padStart(3,'0');
+  busy = false;
+  document.getElementById('btnM').disabled = false;
+  document.getElementById('btnN').classList.add('on');
+}
+
+async function reanalyze() {
+  diffIdx = Math.max(0, diffIdx - 1);
+  round = Math.max(1, round - 1);
+  await startAnalysis();
+}
+
+function renderSignal({ diff, houses, confidence }) {
+  const dIdx = DIFFS.indexOf(diff);
+  const pill = document.getElementById('dpill');
+  pill.textContent = DLBLS[dIdx];
+  pill.className = 'dpill ' + diff;
+
+  document.getElementById('slbl').textContent = 'SEÑAL DETECTADA · ' + DLBLS[dIdx];
+  const finalMult = MULTS[houses] || ((1 + houses * .07).toFixed(2));
+  document.getElementById('smsg').textContent = `Avanza ${houses} casillas → retira en ${finalMult}x`;
+
+  const total = Math.min(houses + 2, 8);
+
+  document.getElementById('stext').textContent = `✅ Avanza ${houses} casillas y retira`;
+  document.getElementById('smult').textContent = finalMult + 'x';
+  document.getElementById('cfill').style.width = confidence + '%';
+  document.getElementById('cval').textContent = confidence + '%';
+
+  document.getElementById('mblock').style.display = 'block';
+
+  startMap(houses, total);
+}
+
+function loadGame() {
+  const url = document.getElementById('urlI').value.trim();
+  if (!url) return;
+  document.getElementById('gph').style.display = 'none';
+  const f = document.getElementById('gframe');
+  f.src = url; f.style.display = 'block';
+}
+
+
+// ── INSTALL MODAL ──────────────────────────────
+const IOS_STEPS = `
+  <div class="ish-step"><div class="ish-num">1</div><div class="ish-text"><strong>Abre este enlace en Safari</strong> — no en Chrome ni otro navegador</div></div>
+  <div class="ish-step"><div class="ish-num">2</div><div class="ish-text">Toca el ícono <strong>⬆ Compartir</strong> en la barra inferior de Safari</div></div>
+  <div class="ish-step"><div class="ish-num">3</div><div class="ish-text">Desplázate y selecciona <strong>"Añadir a pantalla de inicio"</strong>, luego confirma</div></div>`;
+
+const AND_STEPS = `
+  <div class="ish-step"><div class="ish-num">1</div><div class="ish-text">Abre este enlace en <strong>Google Chrome</strong></div></div>
+  <div class="ish-step"><div class="ish-num">2</div><div class="ish-text">Toca el menú <strong>⋮</strong> (tres puntos) en la esquina superior derecha</div></div>
+  <div class="ish-step"><div class="ish-num">3</div><div class="ish-text">Selecciona <strong>"Añadir a pantalla de inicio"</strong> y confirma</div></div>`;
+
+let currentOS = 'ios';
+
+function openInstall() {
+  document.getElementById('installModal').classList.add('on');
+  setOS('ios');
+}
+
+function closeInstall(e) {
+  if (!e || e.target === document.getElementById('installModal')) {
+    document.getElementById('installModal').classList.remove('on');
+  }
+}
+
+function setOS(os) {
+  currentOS = os;
+  document.getElementById('iosBtn').classList.toggle('active', os === 'ios');
+  document.getElementById('andBtn').classList.toggle('active', os === 'android');
+  document.getElementById('ishSteps').innerHTML = os === 'ios' ? IOS_STEPS : AND_STEPS;
+}
+
+// ── INIT ──
+// emoji-based — no canvas init needed
+</script>
+</body>
+</html>
