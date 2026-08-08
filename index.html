@@ -608,7 +608,13 @@ function drawSmoke(ctx, x, y, t) {
 // ═══════════════════════════════════════════════
 //  MAP CANVAS — cells + animated jumping chicken
 // ═══════════════════════════════════════════════
-const MULTS = [1.03,1.07,1.12,1.17,1.23,1.29,1.36,1.44,1.53,1.63];
+const MULTS_BY_DIFF = {
+  easy:   [1.01, 1.04, 1.09, 1.14, 1.20, 1.26],
+  medium: [1.09, 1.24, 1.43, 1.66, 1.93, 2.28],
+  hard:   [1.20, 1.51, 1.93, 2.50, 3.29, 4.39],
+};
+// fallback flat array (overridden per render)
+let MULTS = MULTS_BY_DIFF.easy;
 const CELL_W = 60, CELL_H = 100, MAP_H = 190;
 const START_X = 8;
 let mapRAF = null, mapState = null;
@@ -934,9 +940,9 @@ function renderSignal({ diff, houses, confidence }) {
   pill.className = 'dpill ' + diff;
 
   document.getElementById('slbl').textContent = 'SEÑAL DETECTADA · ' + DLBLS[dIdx];
+  MULTS = MULTS_BY_DIFF[diff] || MULTS_BY_DIFF.easy;
   const finalMult = MULTS[houses] || ((1 + houses * .07).toFixed(2));
   document.getElementById('smsg').textContent = `Avanza ${houses} casillas → retira en ${finalMult}x`;
-
   const total = Math.min(houses + 2, 8);
 
   document.getElementById('stext').textContent = `✅ Avanza ${houses} casillas y retira`;
